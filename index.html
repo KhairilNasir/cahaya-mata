@@ -29,9 +29,7 @@ body {
 }
 
 button, a { -webkit-tap-highlight-color: transparent; }
-
 button { font: inherit; cursor: pointer; }
-
 .hidden { display: none !important; }
 
 .hero {
@@ -143,12 +141,70 @@ p { margin: 12px 0; }
   object-fit: cover;
   display: block;
   background: var(--beige);
+  cursor: zoom-in;
 }
 
 .photo-caption {
   font-size: 12px;
   color: var(--brown);
   padding: 5px;
+}
+
+/* PAPARAN GAMBAR SAIZ PENUH */
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .90);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .25s ease, visibility .25s ease;
+}
+
+.image-lightbox.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.image-lightbox img {
+  display: block;
+  max-width: 95%;
+  max-height: 88vh;
+  width: auto;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+  background: transparent;
+  cursor: default;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  color: white;
+  font-family: Arial, sans-serif;
+  font-size: 32px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.lightbox-close:hover {
+  background: rgba(255,255,255,.3);
 }
 
 .countdown {
@@ -274,12 +330,10 @@ p { margin: 12px 0; }
 
 <body>
 
-<!-- Fail lagu berada terus di root repository -->
 <audio id="music" loop preload="auto">
   <source src="./lagu.mp3" type="audio/mpeg">
 </audio>
 
-<!-- HALAMAN PEMBUKAAN -->
 <header class="hero" id="home">
   <div class="hero-card">
     <p class="eyebrow">Jemputan Istimewa</p>
@@ -312,7 +366,6 @@ p { margin: 12px 0; }
 
 <main id="content" class="hidden">
 
-  <!-- UCAPAN -->
   <section class="section">
     <div class="inner">
       <p class="bismillah" lang="ar">
@@ -337,7 +390,6 @@ p { margin: 12px 0; }
     </div>
   </section>
 
-  <!-- GAMBAR: nama fail mengikut repository GitHub kau -->
   <section class="section soft">
     <div class="inner">
       <p class="eyebrow">Sebuah Kisah, Sebuah Harapan</p>
@@ -372,7 +424,6 @@ p { margin: 12px 0; }
     </div>
   </section>
 
-  <!-- COUNTDOWN -->
   <section class="section cream">
     <div class="inner">
       <p class="eyebrow">Hari Yang Dinantikan</p>
@@ -403,7 +454,6 @@ p { margin: 12px 0; }
     </div>
   </section>
 
-  <!-- BUTIRAN -->
   <section class="section">
     <div class="inner">
       <p class="eyebrow">Jemputan Anda</p>
@@ -438,7 +488,6 @@ p { margin: 12px 0; }
     </div>
   </section>
 
-  <!-- DOA -->
   <section class="section soft">
     <div class="inner">
       <p class="eyebrow">Doa & Harapan</p>
@@ -480,7 +529,6 @@ p { margin: 12px 0; }
     </div>
   </section>
 
-  <!-- UNDIAN -->
   <section class="section cream" id="undian">
     <div class="inner">
       <p class="eyebrow">Jom Buat Pilihan!</p>
@@ -514,7 +562,6 @@ p { margin: 12px 0; }
     </div>
   </section>
 
-  <!-- PENUTUP -->
   <section class="section">
     <div class="inner">
       <p class="eyebrow">Kehadiran Anda Bermakna</p>
@@ -532,6 +579,25 @@ p { margin: 12px 0; }
   </section>
 </main>
 
+<!-- LIGHTBOX: PAPARAN GAMBAR BESAR -->
+<div
+  class="image-lightbox"
+  id="imageLightbox"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Paparan gambar saiz penuh"
+  aria-hidden="true"
+>
+  <button
+    class="lightbox-close"
+    id="lightboxClose"
+    type="button"
+    aria-label="Tutup gambar"
+  >×</button>
+
+  <img id="lightboxImage" src="" alt="">
+</div>
+
 <footer class="footer">
   <p>Dengan kasih, doa dan penuh kesyukuran.</p>
   <p>Satu Rahsia, Satu Kejutan ♡</p>
@@ -543,10 +609,6 @@ p { margin: 12px 0; }
 </button>
 
 <script>
-  /*
-    Masukkan PAUTAN RESPONDEN Google Forms di sini.
-    Jangan gunakan pautan editor.
-  */
   const GOOGLE_FORM_URL =
     "https://docs.google.com/forms/d/e/1FAIpQLSed4FhujzeM3a0FqCAMf_zWouq6v2RwwXDEdCj8-UGFgrriOA/viewform?usp=header";
 
@@ -559,6 +621,50 @@ p { margin: 12px 0; }
 
   let selectedVote = "";
 
+  // FUNGSI PAPAR GAMBAR SAIZ PENUH
+  const imageLightbox = document.getElementById("imageLightbox");
+  const lightboxImage = document.getElementById("lightboxImage");
+  const lightboxClose = document.getElementById("lightboxClose");
+
+  function openLightbox(image) {
+    lightboxImage.src = image.src;
+    lightboxImage.alt = image.alt;
+
+    imageLightbox.classList.add("active");
+    imageLightbox.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    lightboxClose.focus();
+  }
+
+  function closeLightbox() {
+    imageLightbox.classList.remove("active");
+    imageLightbox.setAttribute("aria-hidden", "true");
+    lightboxImage.src = "";
+    document.body.style.overflow = "";
+  }
+
+  document.querySelectorAll(".photo-card img").forEach(image => {
+    image.addEventListener("click", () => openLightbox(image));
+  });
+
+  lightboxClose.addEventListener("click", closeLightbox);
+
+  imageLightbox.addEventListener("click", event => {
+    if (event.target === imageLightbox) {
+      closeLightbox();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (
+      event.key === "Escape" &&
+      imageLightbox.classList.contains("active")
+    ) {
+      closeLightbox();
+    }
+  });
+
   function updateMusicButton() {
     musicToggle.textContent = music.paused
       ? "♫ Muzik: Mati"
@@ -570,10 +676,6 @@ p { margin: 12px 0; }
     musicToggle.classList.remove("hidden");
     home.classList.add("hidden");
 
-    /*
-      play() dipanggil terus selepas klik pengguna.
-      Ini lebih serasi dengan sekatan autoplay pelayar.
-    */
     try {
       await music.play();
     } catch (error) {
@@ -640,7 +742,8 @@ p { margin: 12px 0; }
       });
 
       document.getElementById("voteMessage").textContent =
-        "Tekaan anda: " + selectedVote + ". Tekan butang hantar untuk meneruskan.";
+        "Tekaan anda: " + selectedVote +
+        ". Tekan butang hantar untuk meneruskan.";
     });
   });
 
@@ -659,10 +762,6 @@ p { margin: 12px 0; }
       return;
     }
 
-    /*
-      Borang akan dibuka. Tetamu perlu mengisi dan menghantar
-      Google Forms supaya undian direkodkan.
-    */
     window.open(GOOGLE_FORM_URL, "_blank", "noopener,noreferrer");
   });
 </script>
